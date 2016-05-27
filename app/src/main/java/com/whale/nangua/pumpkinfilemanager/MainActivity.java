@@ -23,9 +23,10 @@ public class MainActivity extends AppCompatActivity {
     ListView lv;
     //菜单
     Menu actionMenu;
-    ArrayList<String> data = new ArrayList<>();
+    ArrayList<File> data = new ArrayList<>();
     ArrayAdapter<String> adapter;
     File[] files;
+    FileAdapter fileAdapter;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -35,17 +36,15 @@ public class MainActivity extends AppCompatActivity {
 
     private void initView() {
         lv = (ListView) findViewById(R.id.lv);
-        //获得本地文件信息列表，绑定listview
+        //获得本地文件信息列表，绑定到data
         files = Environment.getExternalStorageDirectory()
                 .listFiles();
         for (File f : files) {
-            data.add(f.getName());
+            data.add(f);
         }
-        adapter = new ArrayAdapter<String>(
-                this,
-                android.R.layout.simple_list_item_1,
-                data);
-        lv.setAdapter(adapter);
+
+        fileAdapter = new FileAdapter(this,data);
+        lv.setAdapter(fileAdapter);
         lv.setOnItemClickListener(new FileItemClickListener());
     }
 
@@ -73,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
                 intent.setDataAndType(data, type);
                 startActivity(intent);
             } else {
-                // 进入
+                //如果是文件夹
                 // 清除列表数据
                 // 获得目录中的内容，计入列表中
                 // 适配器通知数据集改变
