@@ -309,7 +309,7 @@ public class MainActivity extends AppCompatActivity implements FileAdapter.OnCop
      * 使用递归实现
      */
     private void doSearch(String query) {
-        String  path = getPathString();
+        
     }
 }
 
