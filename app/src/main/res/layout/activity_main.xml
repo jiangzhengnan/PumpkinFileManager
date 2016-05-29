@@ -24,13 +24,6 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             ></ListView>
-        <ProgressBar
-            style="?android:attr/progressBarStyle"
-            android:id="@+id/main_progressbar"
-            android:layout_gravity="center"
-            android:layout_width="100dp"
-            android:visibility="invisible"
-            android:layout_height="100dp"/>
     </FrameLayout>
 
 </LinearLayout>
