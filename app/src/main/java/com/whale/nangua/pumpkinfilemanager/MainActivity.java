@@ -305,11 +305,11 @@ public class MainActivity extends AppCompatActivity implements FileAdapter.OnCop
 
     /**
      * 搜索
-     * 默认为全局搜索
+     * 搜索当前路径下文件夹内文件
      * 使用递归实现
      */
     private void doSearch(String query) {
-
+        String  path = getPathString();
     }
 }
 
