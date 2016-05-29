@@ -63,12 +63,12 @@
         </LinearLayout>
 
         <ImageButton
-            android:id="@+id/ib_file_cell_more"
+            android:id="@+id/file_more"
             android:layout_gravity="center_vertical"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             style="@android:style/Widget.Holo.Button.Borderless"
-            android:src="@drawable/ic_more_vert_black_24dp"
+            android:src="@drawable/ic_arrow_drop_down_24dp"
             />
     </LinearLayout>
 
