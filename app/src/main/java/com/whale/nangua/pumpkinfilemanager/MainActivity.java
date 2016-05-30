@@ -22,6 +22,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.whale.nangua.pumpkinfilemanager.adapter.FileAdapter;
+import com.whale.nangua.pumpkinfilemanager.async.QueryAsyncTask;
 import com.whale.nangua.pumpkinfilemanager.utils.FileSortFactory;
 
 import java.io.File;
@@ -43,7 +44,6 @@ public class MainActivity extends AppCompatActivity implements FileAdapter.OnCop
     private String rootpath;
     private Stack<String> nowPathStack;
 
-    private ProgressBar main_progressbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -124,7 +124,6 @@ public class MainActivity extends AppCompatActivity implements FileAdapter.OnCop
             data.add(f);
         }
         files = fileAdapter.setfiledata(data);
-
     }
 
     //得到当前栈路径的String
@@ -140,20 +139,24 @@ public class MainActivity extends AppCompatActivity implements FileAdapter.OnCop
     long lastBackPressed = 0;
     @Override
     public void onBackPressed() {
-        if (nowPathStack.peek() == rootpath) {
-            //当前时间
-            long currentTime = System.currentTimeMillis();
-            if (currentTime - lastBackPressed < 2000) {
-                super.onBackPressed();
-            } else {
-                Toast.makeText(this, "再按一次退出程序", Toast.LENGTH_SHORT).show();
-            }
-            lastBackPressed = currentTime;
-        } else {
-            nowPathStack.pop();
+        if (ifSearching) {
+            ifSearching=false;
             showChangge(getPathString());
+        }else {
+            if (nowPathStack.peek() == rootpath) {
+                //当前时间
+                long currentTime = System.currentTimeMillis();
+                if (currentTime - lastBackPressed < 2000) {
+                    super.onBackPressed();
+                } else {
+                    Toast.makeText(this, "再按一次退出程序", Toast.LENGTH_SHORT).show();
+                }
+                lastBackPressed = currentTime;
+            } else {
+                nowPathStack.pop();
+                showChangge(getPathString());
+            }
         }
-
     }
 
     MenuItem searchItem;
@@ -223,7 +226,6 @@ public class MainActivity extends AppCompatActivity implements FileAdapter.OnCop
         if (watingCopyFile.equals(null)) {
             Snackbar.make(findViewById(R.id.main_view), "当前粘贴板为空，不能粘贴", Snackbar.LENGTH_SHORT).show();
         } else {
-            main_progressbar.setVisibility(View.VISIBLE);
             if (watingCopyFile.isFile()&&watingCopyFile.exists()){
                 try {
                     FileInputStream fis = new FileInputStream(watingCopyFile);
@@ -244,7 +246,6 @@ public class MainActivity extends AppCompatActivity implements FileAdapter.OnCop
                 } catch (IOException e) {
                     e.printStackTrace();
                 } finally {
-                    main_progressbar.setVisibility(View.INVISIBLE);
                 }
             }
             if (newFile.exists()) {
@@ -297,18 +298,23 @@ public class MainActivity extends AppCompatActivity implements FileAdapter.OnCop
 
                     }
                 });
-
     }
 
     boolean ifSearching = false;
-
+    AlertDialog searchDialog;
+    TextView querytv;
     /**
      * 搜索
      * 搜索当前路径下文件夹内文件
      * 使用递归实现
      */
     private void doSearch(String query) {
-        
+        ifSearching = true;
+        searchDialog = new AlertDialog.Builder(MainActivity.this).create();
+        searchDialog.show();
+        searchDialog.getWindow().setContentView(R.layout.query_dialog);
+        querytv = (TextView) searchDialog.getWindow().findViewById(R.id.query_tv);
+        new QueryAsyncTask(querytv,getPathString(),query,fileAdapter,searchDialog).execute();
     }
 }
 
