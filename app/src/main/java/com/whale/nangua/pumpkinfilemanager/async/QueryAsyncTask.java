@@ -57,7 +57,7 @@ public class QueryAsyncTask extends AsyncTask<Integer,Integer,ArrayList<File>> {
         tv.setText("扫描完成，共扫描文件：" + filenum + "个");
         fileAdapter.setfiledata(data);
         fileAdapter.notifyDataSetChanged();
-
+//
     }
 
     @Override

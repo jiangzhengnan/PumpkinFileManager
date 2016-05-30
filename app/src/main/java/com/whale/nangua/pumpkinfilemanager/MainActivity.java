@@ -22,7 +22,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.whale.nangua.pumpkinfilemanager.adapter.FileAdapter;
-import com.whale.nangua.pumpkinfilemanager.async.QueryAsyncTask;
 import com.whale.nangua.pumpkinfilemanager.utils.FileSortFactory;
 
 import java.io.File;
@@ -30,22 +29,21 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Stack;
 
-public class MainActivity extends AppCompatActivity implements FileAdapter.OnCopyFileListener {
+public class MainActivity extends AppCompatActivity implements FileAdapter.OnCopyFileListener{
     private TextView showtv;
     private ListView lv;
     //菜单
     private Menu actionMenu;
     private ArrayList<File> data = new ArrayList<>();
-    //当前目录文件
     private File[] files;
     private FileAdapter fileAdapter;
 
     private String rootpath;
     private Stack<String> nowPathStack;
 
+    private ProgressBar main_progressbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +53,7 @@ public class MainActivity extends AppCompatActivity implements FileAdapter.OnCop
     }
 
     private void initView() {
+        main_progressbar = (ProgressBar) findViewById(R.id.main_progressbar);
         rootpath = Environment.getExternalStorageDirectory().toString();
         nowPathStack = new Stack<>();
         lv = (ListView) findViewById(R.id.lv);
@@ -78,8 +77,9 @@ public class MainActivity extends AppCompatActivity implements FileAdapter.OnCop
     @Override
     public void doCopy(File file) {
         watingCopyFile = file;
-        Toast.makeText(MainActivity.this, file.getName() + "被添加到粘贴板", Toast.LENGTH_SHORT).show();
+        Toast.makeText(MainActivity.this,file.getName() + "被添加到粘贴板",Toast.LENGTH_SHORT).show();
     }
+
 
 
     static File watingCopyFile;
@@ -138,29 +138,23 @@ public class MainActivity extends AppCompatActivity implements FileAdapter.OnCop
         }
         return result;
     }
-
     long lastBackPressed = 0;
-
     @Override
     public void onBackPressed() {
-        if (ifSearching == true) {
-            ifSearching = false;
-            showChangge(getPathString());
-        } else {
-            if (nowPathStack.peek() == rootpath) {
-                //当前时间
-                long currentTime = System.currentTimeMillis();
-                if (currentTime - lastBackPressed < 2000) {
-                    super.onBackPressed();
-                } else {
-                    Toast.makeText(this, "再按一次退出程序", Toast.LENGTH_SHORT).show();
-                }
-                lastBackPressed = currentTime;
+        if (nowPathStack.peek() == rootpath) {
+            //当前时间
+            long currentTime = System.currentTimeMillis();
+            if (currentTime - lastBackPressed < 2000) {
+                super.onBackPressed();
             } else {
-                nowPathStack.pop();
-                showChangge(getPathString());
+                Toast.makeText(this, "再按一次退出程序", Toast.LENGTH_SHORT).show();
             }
+            lastBackPressed = currentTime;
+        } else {
+            nowPathStack.pop();
+            showChangge(getPathString());
         }
+
     }
 
     MenuItem searchItem;
@@ -226,11 +220,12 @@ public class MainActivity extends AppCompatActivity implements FileAdapter.OnCop
      * 复制或粘贴
      */
     private void doPaste() {
-        File newFile = new File(getPathString() + "/" + watingCopyFile.getName());
+        File newFile = new File(getPathString()+"/"+watingCopyFile.getName());
         if (watingCopyFile.equals(null)) {
             Snackbar.make(findViewById(R.id.main_view), "当前粘贴板为空，不能粘贴", Snackbar.LENGTH_SHORT).show();
         } else {
-            if (watingCopyFile.isFile() && watingCopyFile.exists()) {
+            main_progressbar.setVisibility(View.VISIBLE);
+            if (watingCopyFile.isFile()&&watingCopyFile.exists()){
                 try {
                     FileInputStream fis = new FileInputStream(watingCopyFile);
                     FileOutputStream fos = new FileOutputStream(newFile);
@@ -238,10 +233,10 @@ public class MainActivity extends AppCompatActivity implements FileAdapter.OnCop
                     long contentSize = watingCopyFile.length();
                     long readed = 0;
                     byte[] buff = new byte[8192];
-                    while ((len = fis.read(buff)) != -1) {
+                    while ((len=fis.read(buff))!=-1){
                         //写文件
-                        fos.write(buff, 0, len);
-                        readed += len;
+                        fos.write(buff,0,len);
+                        readed+=len;
                         //发布进度
                     }
                     fos.flush();
@@ -250,11 +245,11 @@ public class MainActivity extends AppCompatActivity implements FileAdapter.OnCop
                 } catch (IOException e) {
                     e.printStackTrace();
                 } finally {
-
+                    main_progressbar.setVisibility(View.INVISIBLE);
                 }
             }
             if (newFile.exists()) {
-                Toast.makeText(MainActivity.this, "复制" + newFile.getName() + "成功", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this,"复制" + newFile.getName() + "成功",Toast.LENGTH_SHORT).show();
                 fileAdapter.notifyDataSetChanged();
             }
         }
@@ -264,7 +259,6 @@ public class MainActivity extends AppCompatActivity implements FileAdapter.OnCop
 
     AlertDialog mydialog;
     EditText newfloder_name;
-
     /**
      * 创建新文件夹
      */
@@ -291,12 +285,12 @@ public class MainActivity extends AppCompatActivity implements FileAdapter.OnCop
                 .setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        String name = newfloder_name.getText().toString();
+                        String name =  newfloder_name.getText().toString();
                         if (name != null) {
                             File folder = new File(getPathString() + "/" + name);
                             folder.mkdirs();
                             if (folder.exists()) {
-                                Toast.makeText(MainActivity.this, "文件：" + name + " 创建成功", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(MainActivity.this,"文件："+name + " 创建成功",Toast.LENGTH_SHORT).show();
                                 showChangge(getPathString());
                                 mydialog.dismiss();
                             }
@@ -309,32 +303,13 @@ public class MainActivity extends AppCompatActivity implements FileAdapter.OnCop
 
     boolean ifSearching = false;
 
-    //保存搜索结果的arraylist<file>
-    HashMap<File, String> searchfilemap;
-    AlertDialog queryDialog;
-    TextView querytv;
-    ProgressBar queryprogressbar;
-
-    String query = "";
-
-    QueryAsyncTask queryAsyncTask;
     /**
      * 搜索
-     * 搜索当前路径下所有文件(包括所有子文件夹内的子文件)
+     * 搜索当前路径下文件夹内文件
      * 使用递归实现
      */
     private void doSearch(String query) {
-        ifSearching = true;
-        queryDialog = new AlertDialog.Builder(MainActivity.this).create();
-        queryDialog.show();
-        queryDialog.getWindow().setContentView(R.layout.query_dialog);
-        querytv = (TextView) queryDialog.getWindow().findViewById(R.id.query_tv);
-        queryAsyncTask = new QueryAsyncTask(querytv,getPathString(),query,fileAdapter,queryDialog);
-        queryAsyncTask.execute();
-
+        
     }
-
-
-
 }
 
