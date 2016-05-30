@@ -53,7 +53,6 @@ public class MainActivity extends AppCompatActivity implements FileAdapter.OnCop
     }
 
     private void initView() {
-        main_progressbar = (ProgressBar) findViewById(R.id.main_progressbar);
         rootpath = Environment.getExternalStorageDirectory().toString();
         nowPathStack = new Stack<>();
         lv = (ListView) findViewById(R.id.lv);
